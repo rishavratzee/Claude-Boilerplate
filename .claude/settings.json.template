@@ -75,6 +75,10 @@
           {
             "type": "command",
             "command": ".claude/hooks/session-summary.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/memory-bank-nudge.sh"
           }
         ]
       }
@@ -84,6 +88,7 @@
     "CLAUDE_SDLC_STACK": "{{STACK}}",
     "CLAUDE_SDLC_TEST_CMD": "{{TEST_CMD}}",
     "CLAUDE_SDLC_LINT_CMD": "{{LINT_CMD}}",
-    "CLAUDE_SDLC_BUILD_CMD": "{{BUILD_CMD}}"
+    "CLAUDE_SDLC_BUILD_CMD": "{{BUILD_CMD}}",
+    "CLAUDE_SDLC_MEMORY_NUDGE": "1"
   }
 }

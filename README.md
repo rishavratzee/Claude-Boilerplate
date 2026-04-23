@@ -1,6 +1,6 @@
 # claude-sdlc-boilerplate
 
-A drop-in repo that turns any project — new or existing — into a Claude-augmented SDLC workbench. One script installs a curated `CLAUDE.md`, 13 trigger-tuned skills, 5 always-on subagents plus up-to-4 stack-gated specialists, 6 lifecycle hooks, a memory-bank file system, and an opinionated `settings.json`.
+A drop-in repo that turns any project — new or existing — into a Claude-augmented SDLC workbench. One script installs a curated `CLAUDE.md`, 13 trigger-tuned skills, 5 always-on subagents plus up-to-4 stack-gated specialists, 7 lifecycle hooks, a memory-bank file system, and an opinionated `settings.json`.
 
 The goal: every new project feels like **a team of specialists is working alongside you** — a reviewer, a test-runner, a security auditor, a refactoring expert, a database expert, a researcher, a planner — rather than a single chat window you lean on reactively.
 
@@ -13,7 +13,7 @@ The goal: every new project feels like **a team of specialists is working alongs
 | **13 skills** | All SDLC stages — plan, implement, test, review, debug, doc, commit, PR, maintain |
 | **5 always-on subagents** | `test-runner`, `reviewer` (read-only), `researcher`, `refactoring-expert`, `security-auditor` |
 | **Up to 4 stack-gated subagents** | `accessibility-expert` + `design-reviewer` (frontend), `database-expert` (DB), `docker-expert` (Dockerfile) |
-| **6 hooks** | Security (file-guard), quality (lint, code-quality, adjacent-tests), recovery (checkpoint), summary |
+| **7 hooks** | Security (file-guard), quality (lint, code-quality, adjacent-tests), recovery (checkpoint), summary |
 | **Memory-bank** | `CLAUDE-activeContext.md`, `-patterns.md`, `-decisions.md`, `-troubleshooting.md` for cross-session memory |
 | **Evals per skill** | `evals.json` with positive/negative trigger prompts for tuning descriptions |
 | `setup.sh` | Idempotent installer. Detects TS/Node, Python, Go, Rust, plus frontend/DB/Docker gates. Merges safely with existing `CLAUDE.md` / `settings.json`. |
@@ -69,6 +69,7 @@ Every skill has an aggressive trigger description, an `evals.json` with positive
 | `post-write-test.sh` | PostToolUse (Write/Edit) | Runs adjacent tests for the edited file |
 | `create-checkpoint.sh` | Stop | Git-stash snapshot of working tree for recoverable sessions |
 | `session-summary.sh` | Stop | Structured log of files changed + commits to `.claude/logs/` |
+| `memory-bank-nudge.sh` | Stop | Reminds (advisory only) when source changed but no `CLAUDE-*.md` memory-bank file was updated |
 
 ## Install
 
@@ -120,7 +121,7 @@ claude-sdlc-boilerplate/
 ├── CLAUDE.md.template          <- project-context, filled in per target
 ├── memory-bank-templates/      <- CLAUDE-activeContext / -patterns / -decisions / -troubleshooting
 ├── .claude/
-│   ├── settings.json.template  <- permissions, 6 hooks, MCP allow-lists
+│   ├── settings.json.template  <- permissions, 7 hooks, MCP allow-lists
 │   ├── skills/                 <- 13 skills, each with evals.json
 │   │   ├── code-review/        ├── feature-implementation/
 │   │   ├── debug/              │   ├── references/
@@ -140,7 +141,7 @@ claude-sdlc-boilerplate/
 │   │       ├── frontend/            <- accessibility-expert, design-reviewer
 │   │       ├── database/            <- database-expert
 │   │       └── docker/              <- docker-expert
-│   └── hooks/                  <- 6 lifecycle hooks (bash)
+│   └── hooks/                  <- 7 lifecycle hooks (bash)
 └── docs/
     ├── claude-onboarding.md    <- 90-min ramp for new devs
     ├── PLUGINS.md              <- recommended plugins & marketplaces

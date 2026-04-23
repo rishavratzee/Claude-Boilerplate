@@ -114,5 +114,6 @@ Deterministic guarantees, not prompts. See `.claude/settings.json` for the wirin
 ### Stop
 - **create-checkpoint** — git-stash snapshot of the working tree. Restore later with `/checkpoint:restore`.
 - **session-summary** — structured log of files changed + commits to `.claude/logs/session-YYYYMMDD.log`.
+- **memory-bank-nudge** — advisory reminder when source changed but no `CLAUDE-*.md` memory-bank file was updated. Disable with `CLAUDE_SDLC_MEMORY_NUDGE=0`.
 
 <!-- END CLAUDE-SDLC-BOILERPLATE -->
