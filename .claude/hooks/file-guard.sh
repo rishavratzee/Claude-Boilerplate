@@ -76,9 +76,21 @@ for ignore in ".agentignore" ".aiignore" ".cursorignore" ".codeiumignore" ".aiex
   load_ignore_file "$ignore"
 done
 
+# ---------- allowlist ----------
+# Filenames that *look* sensitive but are the documented public conventions
+# for env-var templates. Stripped from the scan target before matching so the
+# deny patterns don't trip on e.g. `.env.example` (whose `.env` substring
+# otherwise matches `\.env\b`).
+ALLOWED_TOKEN_REGEX='\.env\.(example|sample|template|dist)'
+
+sanitize_for_scan() {
+  sed -E "s/${ALLOWED_TOKEN_REGEX}//g" <<< "$1"
+}
+
 # ---------- matcher ----------
 match_sensitive() {
-  local target="$1"
+  local target
+  target=$(sanitize_for_scan "$1")
   for pat in "${SENSITIVE_PATTERNS[@]}"; do
     if grep -qE "$pat" <<< "$target"; then
       return 0
@@ -100,8 +112,12 @@ fi
 # Look for sensitive patterns anywhere in the command string. False positives
 # are OK here — this is a guard, not a linter.
 if [[ -n "${BASH_CMD:-}" ]]; then
+  # Strip allowlisted tokens so e.g. a commit message or redirection targeting
+  # `.env.example` doesn't match the generic `.env` pattern.
+  BASH_CMD_SCAN=$(sanitize_for_scan "$BASH_CMD")
+
   for pat in "${SENSITIVE_PATTERNS[@]}"; do
-    if grep -qE "$pat" <<< "$BASH_CMD"; then
+    if grep -qE "$pat" <<< "$BASH_CMD_SCAN"; then
       echo "file-guard: blocked bash command touching sensitive path pattern: $pat" >&2
       echo "file-guard: command was: $BASH_CMD" >&2
       [[ "${FILE_GUARD_OVERRIDE:-0}" = "1" ]] || exit 2
@@ -110,7 +126,7 @@ if [[ -n "${BASH_CMD:-}" ]]; then
 
   # Heuristic: commands that read arbitrary file contents (cat, less, head, tail)
   # combined with find/xargs are classic exfiltration paths.
-  if grep -qE '(cat|head|tail|less|more|xxd|base64|openssl\s+enc)\b.*\.(env|pem|key|p12|pfx)' <<< "$BASH_CMD"; then
+  if grep -qE '(cat|head|tail|less|more|xxd|base64|openssl\s+enc)\b.*\.(env|pem|key|p12|pfx)' <<< "$BASH_CMD_SCAN"; then
     echo "file-guard: blocked bash command that appears to read a sensitive file" >&2
     echo "file-guard: command was: $BASH_CMD" >&2
     [[ "${FILE_GUARD_OVERRIDE:-0}" = "1" ]] || exit 2

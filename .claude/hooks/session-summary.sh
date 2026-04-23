@@ -23,6 +23,8 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   echo "session_end: $NOW"
 
   if git rev-parse --git-dir >/dev/null 2>&1; then
+    # Branch name — `HEAD` if detached, `unknown` if git can't resolve.
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
     # Changes since HEAD (unstaged + staged but uncommitted)
     changed=$(git diff --name-only HEAD 2>/dev/null | sort -u | tr '\n' ' ' || true)
     staged=$(git diff --name-only --staged 2>/dev/null | sort -u | tr '\n' ' ' || true)
@@ -32,6 +34,7 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
       commits=$(git log --oneline main..HEAD 2>/dev/null | head -20 || true)
     fi
 
+    echo "branch: ${branch:-unknown}"
     echo "files_changed: ${changed:-<none>}"
     echo "files_staged: ${staged:-<none>}"
     if [[ -n "$commits" ]]; then
