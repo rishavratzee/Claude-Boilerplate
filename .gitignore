@@ -1,0 +1,18 @@
+# Source document (kept local, not committed)
+*.docx
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Claude local overrides (personal, per-developer)
+.claude/settings.local.json
+.claude/logs/
+
+# Installer scratch
+.boilerplate-backup-*/
+.claude/settings.json.proposed
+.claude/settings.json.pre-boilerplate

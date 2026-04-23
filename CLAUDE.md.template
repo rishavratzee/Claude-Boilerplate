@@ -1,0 +1,118 @@
+# {{PROJECT_NAME}}
+
+<!-- BEGIN CLAUDE-SDLC-BOILERPLATE -->
+<!--
+  This block is managed by claude-sdlc-boilerplate.
+  Re-run setup.sh to regenerate. Edit freely — your edits outside
+  this block are preserved. Edits inside may be overwritten.
+-->
+
+## Stack
+- Language: {{LANGUAGE}}
+- Framework: {{FRAMEWORK}}
+- Package manager: {{PKG_MGR}}
+- Test runner: {{TEST_RUNNER}}
+- Lint / format: {{LINTER}}
+- CI: {{CI}}
+
+## Architecture (5-line summary)
+<!-- TODO: Fill in core domains, key boundaries, primary data flow.
+     Keep it to 5 lines. If you need more, link to an ADR. -->
+
+## Folder conventions
+<!-- TODO: List the top-level folders and what lives in each.
+     Example:
+     - /src/app      — routes, server actions
+     - /src/lib      — pure domain logic, no I/O
+     - /src/infra    — DB, HTTP, external clients
+     - /tests        — unit + integration -->
+
+## Non-negotiables
+- Never commit `.env`, secrets, or credentials
+- Never edit `/migrations` manually — use the migrate skill
+- Never introduce new runtime dependencies without an ADR in `/docs/adr/`
+- Always run `{{TEST_CMD}}` before opening a PR
+- Always run `{{LINT_CMD}}` before committing
+<!-- TODO: Add project-specific non-negotiables -->
+
+## Common gotchas
+<!-- TODO: Non-obvious things that trip people up. Examples:
+     - Module X uses legacy callback style — see /src/legacy/README
+     - Feature flag service has a 30s cache — don't poll in loops
+     - Test DB resets between suites, not between tests -->
+
+## How to run locally
+```
+{{INSTALL_CMD}}
+{{DEV_CMD}}
+```
+
+## Memory-bank companion files
+At the repo root:
+- `CLAUDE-activeContext.md` — what's in progress NOW (update each work session)
+- `CLAUDE-patterns.md` — reusable patterns this codebase has adopted
+- `CLAUDE-decisions.md` — ADR-lite log of medium-weight choices
+- `CLAUDE-troubleshooting.md` — weird bugs and their fixes
+
+Say "update memory bank" to refresh them from the current session.
+
+## Skills available (13)
+
+Run any with `/<skill-name>`. All are trigger-tuned — the right one usually fires without naming it.
+
+### Planning & design
+- `/planning` — concrete implementation plan before any code
+- `/spec:create / decompose / execute` — three-stage workflow for big features with code-copy into tasks
+- `/ui-planner` — component breakdown, state, flows, a11y, responsive
+
+### Implementation & testing
+- `/feature-implementation` — end-to-end feature build; loads references on-demand
+- `/write-tests` — unit/integration/e2e with edge-case enumeration
+- `/debug` — strict repro → failing test → fix → regression loop
+
+### Quality & review
+- `/validate-and-fix` — auto-discover lint/typecheck/test, parallel run, categorize, fix
+- `/code-review` — correctness/security/coverage, severity-grouped findings
+- `/write-docs` — READMEs, ADRs, runbooks, inline docs, API refs
+
+### Ship & maintain
+- `/git:commit` — read repo style, match convention, write specific message
+- `/pr` — pre-flight lint/test, structured title/body/test-plan/rollback
+- `/checkpoint:create / restore / list` — named git-stash snapshots
+- `/dependency-upgrade` — one-at-a-time safe bumps with changelog + suite
+
+## Subagents available
+
+Dispatch them to parallelize work and keep the main session's context clean.
+
+### Always-on
+- `test-runner` — iterates failing tests until green (own context, can write code)
+- `reviewer` — read-only self-review before PR; structured findings
+- `researcher` — gathers external context (docs, PRs, blog posts) without touching code
+- `refactoring-expert` — Fowler-style behavior-preserving incremental loop
+- `security-auditor` — OWASP-driven deeper-than-review security pass
+
+### Stack-gated (installed only when your stack triggers the gate)
+<!-- The installer copies these into `.claude/agents/` only if the stack detects frontend / database / docker. -->
+- `accessibility-expert` — WCAG/ARIA/keyboard/a11y tooling (frontend)
+- `design-reviewer` — UI/UX post-build review (frontend)
+- `database-expert` — query plans, indexes, N+1, migration safety (DB)
+- `docker-expert` — multi-stage, caching, size, hardening (Docker)
+
+## Hooks active in this repo
+
+Deterministic guarantees, not prompts. See `.claude/settings.json` for the wiring.
+
+### PreToolUse
+- **file-guard** — blocks reads/writes of `.env`, SSH keys, cloud creds — including through shell pipelines like `find | xargs cat`. Override with `FILE_GUARD_OVERRIDE=1`.
+- **pre-write-lint** — runs the project linter on files being edited; blocks the tool call on failure.
+
+### PostToolUse
+- **check-code-quality** — flags `// ...` placeholder stubs, silent `any`/`as any`, `_foo` unused-param drift that lint won't catch.
+- **post-write-test** — runs adjacent tests (`foo.test.ts`, `test_foo.py`, etc.) after each edit.
+
+### Stop
+- **create-checkpoint** — git-stash snapshot of the working tree. Restore later with `/checkpoint:restore`.
+- **session-summary** — structured log of files changed + commits to `.claude/logs/session-YYYYMMDD.log`.
+
+<!-- END CLAUDE-SDLC-BOILERPLATE -->
