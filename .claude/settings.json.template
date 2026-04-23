@@ -78,6 +78,10 @@
           },
           {
             "type": "command",
+            "command": ".claude/hooks/session-memory-bank.sh"
+          },
+          {
+            "type": "command",
             "command": ".claude/hooks/memory-bank-nudge.sh"
           }
         ]
