@@ -98,7 +98,7 @@ Triggered by: "publish roadmap to Confluence", "create Jira tickets for Phase 5"
 **Jira create flow** (full mapping in `references/integrations/jira-sync.md`):
 1. Identify the target phase from the live plan.
 2. Identify or ask for the Jira project key + reporter. Cache in the changelog along with assignee-name → accountId mappings.
-3. Map: phase → Epic; task → Story (or Task) under the Epic. **Sprints not auto-created** (team manages sprints in board).
+3. Map: phase → Epic; task → Story (or Task) under the Epic. **Sprints are monthly** — every newly-created issue lands in the current month's sprint (named `sprint-<lowercase-month>`, e.g. `sprint-may`). Sprint is resolved on the project's board; if missing, skill offers to create it or falls back to a `sprint-<month>` label. Rollover at month boundary is team-managed via Jira's "Complete Sprint → Move to next sprint" — skill does not auto-rollover.
 4. Show preview list of issues to create — Stories carry **scrum-style descriptions** (What / Why / Acceptance Criteria / Implementation notes / Definition of Done) with story points (1pt ≈ 2h … 8pt ≈ 2d), and assignees resolved via `lookupJiraAccountId` with prompt-fallback.
 5. On confirmation, batch-create via `createJiraIssue`.
 6. Write back the created keys into the live plan: `T-5a [JIRA: PROJ-123]`.
