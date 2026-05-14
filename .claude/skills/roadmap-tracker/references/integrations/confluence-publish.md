@@ -18,71 +18,93 @@ If Atlassian MCP isn't connected, the skill prints the storage-format body for m
 
 - **Cloud:** <subdomain>.atlassian.net
 - **Space key:** <KEY>
-- **Parent page:** <breadcrumb>  (id: <pageId>)
-- **Page title:** "<PROJECT> — Roadmap"  (no date in title — date is in footer; page is updated in place)
-- **Page ID:** <set after first publish>
+- **Layout:** three-page  (or "single" — see "Three-page model" below)
+- **Upper parent:** <breadcrumb>  (id: <pageId>)
+                    where the project's roadmap folder lives — usually space home or
+                    a shared "Roadmap" hub page across all projects
+- **Page IDs:** set after first publish
+  - parent: <PROJECT> — Roadmap        →  <id>
+  - child:  <PROJECT> — Current        →  <id>
+  - child:  <PROJECT> — Future         →  <id>
 - **Set by:** <user>
 ```
 
 Future invocations read from CHANGELOG before prompting.
 
-## Single-page model
+## Three-page model (default)
 
-**One page per project, updated in place.** Never multiple pages per phase or per concern. Reasons:
+**One parent + two children per project, updated in place.** Default `confluence_layout: three-page` in the changelog config. Layout:
 
-- Stakeholders bookmark the page; rotating URLs breaks their muscle memory
-- Confluence page history shows the change record automatically (no need for separate per-publish pages)
-- Single page = single search result when execs look up the project
+```
+<Confluence space>
+└── <PROJECT> — Roadmap        (parent: overview, all-phase table, links to children)
+    ├── <PROJECT> — Current    (only ⏳ phases: progress detail, recent ships)
+    └── <PROJECT> — Future     (📋 phases: Pipeline + Backlog + Reserved)
+```
 
-If a stakeholder needs a frozen snapshot for a specific moment (board meeting, quarterly review), they can use Confluence's native "Page History" → "Restore this version" — no special skill behavior needed.
+Why three pages: stakeholders bookmark "Current" for weekly status; execs scan parent for phase table; PMs use "Future" for next-quarter scoping.
 
-## Page-create vs update logic
+Override: set `confluence_layout: single` in the changelog config block to render everything into the parent only (no children created or updated). Falls back to the prior single-page format from `confluence-page.md` storage block "Parent page body" used as the whole-page body.
+
+## Page-create vs update logic (three-page mode)
 
 ### First publish for a project
-1. Resolve the parent page ID (search via `searchConfluenceUsingCql` if user gave a parent title).
-2. Render the body using `references/templates/confluence-page.md` (the concise single-page format).
-3. Call `createConfluencePage`:
+1. Resolve the **upper parent** (where the project's roadmap folder lives) via `searchConfluenceUsingCql` if user gave a title, else use the `parentId` cached in changelog. Common choices: space home, or a dedicated org-level "Roadmap" hub page.
+2. Render three bodies via `references/templates/confluence-page.md` (parent / Current / Future sections).
+3. **Create parent first** (children need its pageId):
    ```json
    {
-     "spaceId": "...",
+     "spaceId": "<spaceId>",
      "title": "<PROJECT> — Roadmap",
-     "parentId": "...",
-     "body": {"storage": {"value": "<rendered storage format>", "representation": "storage"}}
+     "parentId": "<upper-parent-id>",
+     "body": {"storage": {"value": "<parent body>", "representation": "storage"}}
    }
    ```
-4. Capture `pageId` from response. Store in CHANGELOG:
+   Capture `parentRoadmapPageId`.
+4. **Create Current** under the parent:
+   ```json
+   {
+     "spaceId": "<spaceId>",
+     "title": "<PROJECT> — Current",
+     "parentId": "<parentRoadmapPageId>",
+     "body": {"storage": {"value": "<current body>", "representation": "storage"}}
+   }
+   ```
+   Capture `currentPageId`.
+5. **Create Future** under the parent (same shape, title `<PROJECT> — Future`). Capture `futurePageId`.
+6. Append to CHANGELOG:
    ```markdown
-   ## YYYY-MM-DD — Confluence published (initial)
+   ## YYYY-MM-DD — Confluence published (initial three-page)
 
-   - **Page:** <PROJECT> — Roadmap
-   - **URL:** https://<domain>.atlassian.net/wiki/spaces/<KEY>/pages/<pageId>
-   - **Page ID:** <pageId>
+   - **Layout:** three-page
+   - **Space:** <KEY>  |  **Cloud:** <subdomain>.atlassian.net
+   - **Upper parent:** <upper-parent-title> (id <upper-parent-id>)
+   - **Roadmap parent:** <PROJECT> — Roadmap (id <parentRoadmapPageId>)
+     - URL: https://<domain>.atlassian.net/wiki/spaces/<KEY>/pages/<parentRoadmapPageId>
+   - **Current child:** <PROJECT> — Current (id <currentPageId>)
+   - **Future child:** <PROJECT> — Future (id <futurePageId>)
    - **Source commit:** <hash>
    ```
-5. Show URL to user.
+7. Show all three URLs to user, parent first.
 
 ### Subsequent publishes
-1. Read the cached `pageId` from CHANGELOG.
-2. `getConfluencePage(pageId)` to get current `version.number`.
-3. Re-render body (title stays the same — date moves to footer).
-4. `updateConfluencePage`:
-   ```json
-   {
-     "pageId": "...",
-     "title": "<PROJECT> — Roadmap",
-     "body": {"storage": {"value": "...", "representation": "storage"}},
-     "version": {"number": <current + 1>}
-   }
-   ```
+1. Read cached `parentRoadmapPageId`, `currentPageId`, `futurePageId` from CHANGELOG.
+2. For each, fetch current `version.number` via `getConfluencePage`.
+3. Re-render all three bodies (titles stable, date in footer).
+4. `updateConfluencePage` for each, in order: parent → Current → Future. Each gets `version.number = current + 1`.
 5. Append to CHANGELOG:
    ```markdown
-   ## YYYY-MM-DD — Confluence published (update)
+   ## YYYY-MM-DD — Confluence published (update three-page)
 
-   - **Page:** <title>
-   - **Version:** N → N+1
+   - **Pages updated:** parent (vN → vN+1), Current (vM → vM+1), Future (vK → vK+1)
    - **Source commit:** <hash>
-   - **Trigger:** <user prompt that caused publish, e.g. "publish roadmap to Confluence">
+   - **Trigger:** <user prompt>
    ```
+
+### Optimization: skip unchanged pages
+On subsequent publishes, compute the storage-format hash of each body before update. If a body hasn't changed since last publish (hash cached in CHANGELOG), skip the update for that page. Reduces noise in Confluence page-history when only one section moved.
+
+E.g., if T-4e moves 📋 → ⏳: Current page changes (now shows T-4e in active list); Future page might lose T-4e from Pipeline; parent table updates the phase status. Three updates. If only metadata changed, fewer.
 
 ## Conflict handling on update
 

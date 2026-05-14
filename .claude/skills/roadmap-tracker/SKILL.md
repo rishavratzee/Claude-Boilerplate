@@ -90,10 +90,15 @@ Triggered by: "publish roadmap to Confluence", "create Jira tickets for Phase 5"
 
 **Confluence flow** (full mapping in `references/integrations/confluence-publish.md`):
 1. Read the planning doc.
-2. Identify or ask for target space + page. Cache the choice in the changelog.
-3. Render via `references/templates/confluence-page.md` — **single concise page per project, updated in place** (no per-phase pages, no rotating titles).
-4. Show preview; on confirmation, call `createConfluencePage` or `updateConfluencePage`.
-5. Record the page URL in the changelog.
+2. Identify or ask for target space + upper parent (where the project's roadmap folder lives — often space home or a shared "Roadmap" hub page). Cache in changelog.
+3. Render three pages via `references/templates/confluence-page.md` — **three-page tree per project, updated in place**:
+   - `<PROJECT> — Roadmap` (parent: overview + all-phase table + links to children)
+   - `<PROJECT> — Current` (only ⏳ In progress phases: progress detail + recent ships)
+   - `<PROJECT> — Future` (📋 Pipeline + Backlog + Reserved phases)
+4. Show preview of all three; on confirmation, call `createConfluencePage` (parent first, then children) or `updateConfluencePage`. Skip-unchanged optimization on subsequent publishes (hash-compare per page).
+5. Record all three page URLs in the changelog.
+
+Override: set `confluence_layout: single` in the changelog config to fall back to a single-page-per-project format (renders parent body only).
 
 **Jira create flow** (full mapping in `references/integrations/jira-sync.md`):
 1. Identify the target phase from the live plan.
