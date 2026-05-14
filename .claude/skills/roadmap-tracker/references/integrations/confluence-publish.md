@@ -16,25 +16,36 @@ If Atlassian MCP isn't connected, the skill prints the storage-format body for m
 ```markdown
 ## YYYY-MM-DD — Confluence configuration set
 
-- **Space key:** ENG
-- **Parent page:** Engineering > Roadmaps  (id: 12345678)
-- **Page title pattern:** "<PROJECT> — Roadmap & Status (last updated YYYY-MM-DD)"
-- **Auto-update title with date:** yes
+- **Cloud:** <subdomain>.atlassian.net
+- **Space key:** <KEY>
+- **Parent page:** <breadcrumb>  (id: <pageId>)
+- **Page title:** "<PROJECT> — Roadmap"  (no date in title — date is in footer; page is updated in place)
+- **Page ID:** <set after first publish>
 - **Set by:** <user>
 ```
 
 Future invocations read from CHANGELOG before prompting.
 
+## Single-page model
+
+**One page per project, updated in place.** Never multiple pages per phase or per concern. Reasons:
+
+- Stakeholders bookmark the page; rotating URLs breaks their muscle memory
+- Confluence page history shows the change record automatically (no need for separate per-publish pages)
+- Single page = single search result when execs look up the project
+
+If a stakeholder needs a frozen snapshot for a specific moment (board meeting, quarterly review), they can use Confluence's native "Page History" → "Restore this version" — no special skill behavior needed.
+
 ## Page-create vs update logic
 
 ### First publish for a project
 1. Resolve the parent page ID (search via `searchConfluenceUsingCql` if user gave a parent title).
-2. Render the body using `references/templates/confluence-page.md`.
+2. Render the body using `references/templates/confluence-page.md` (the concise single-page format).
 3. Call `createConfluencePage`:
    ```json
    {
      "spaceId": "...",
-     "title": "<PROJECT> — Roadmap & Status (last updated YYYY-MM-DD)",
+     "title": "<PROJECT> — Roadmap",
      "parentId": "...",
      "body": {"storage": {"value": "<rendered storage format>", "representation": "storage"}}
    }
@@ -43,8 +54,8 @@ Future invocations read from CHANGELOG before prompting.
    ```markdown
    ## YYYY-MM-DD — Confluence published (initial)
 
-   - **Page:** <PROJECT> — Roadmap & Status
-   - **URL:** https://<domain>.atlassian.net/wiki/spaces/ENG/pages/<pageId>
+   - **Page:** <PROJECT> — Roadmap
+   - **URL:** https://<domain>.atlassian.net/wiki/spaces/<KEY>/pages/<pageId>
    - **Page ID:** <pageId>
    - **Source commit:** <hash>
    ```
@@ -53,12 +64,12 @@ Future invocations read from CHANGELOG before prompting.
 ### Subsequent publishes
 1. Read the cached `pageId` from CHANGELOG.
 2. `getConfluencePage(pageId)` to get current `version.number`.
-3. Re-render body (with the new title containing today's date).
+3. Re-render body (title stays the same — date moves to footer).
 4. `updateConfluencePage`:
    ```json
    {
      "pageId": "...",
-     "title": "<new title with today's date>",
+     "title": "<PROJECT> — Roadmap",
      "body": {"storage": {"value": "...", "representation": "storage"}},
      "version": {"number": <current + 1>}
    }

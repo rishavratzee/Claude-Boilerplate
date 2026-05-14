@@ -91,17 +91,20 @@ Triggered by: "publish roadmap to Confluence", "create Jira tickets for Phase 5"
 **Confluence flow** (full mapping in `references/integrations/confluence-publish.md`):
 1. Read the planning doc.
 2. Identify or ask for target space + page. Cache the choice in the changelog.
-3. Render via `references/templates/confluence-page.md`.
+3. Render via `references/templates/confluence-page.md` — **single concise page per project, updated in place** (no per-phase pages, no rotating titles).
 4. Show preview; on confirmation, call `createConfluencePage` or `updateConfluencePage`.
 5. Record the page URL in the changelog.
 
 **Jira create flow** (full mapping in `references/integrations/jira-sync.md`):
 1. Identify the target phase from the live plan.
-2. Identify or ask for the Jira project key. Cache in the changelog.
-3. Map: phase → Epic; task → Story (or Task) under the Epic.
-4. Show preview list of issues to create. On confirmation, batch-create via `createJiraIssue`.
-5. Write back the created keys into the live plan: `T-5a [JIRA: PROJ-123]`.
-6. Record keys in the changelog.
+2. Identify or ask for the Jira project key + reporter. Cache in the changelog along with assignee-name → accountId mappings.
+3. Map: phase → Epic; task → Story (or Task) under the Epic. **Sprints not auto-created** (team manages sprints in board).
+4. Show preview list of issues to create — Stories carry **scrum-style descriptions** (What / Why / Acceptance Criteria / Implementation notes / Definition of Done) with story points (1pt ≈ 2h … 8pt ≈ 2d), and assignees resolved via `lookupJiraAccountId` with prompt-fallback.
+5. On confirmation, batch-create via `createJiraIssue`.
+6. Write back the created keys into the live plan: `T-5a [JIRA: PROJ-123]`.
+7. Record keys + assignee map in the changelog.
+
+**Status mirroring** (extends Capability 3): when a local task transitions (📋 → ⏳ → ✅), the skill optionally propagates to Jira — transition the issue + add a one-line comment with timestamp, actor, and commit hash if known. Asked once per session whether to auto-propagate; cached for the rest of the session.
 
 ### Capability 5 — Generate handoff doc / sprint report
 
