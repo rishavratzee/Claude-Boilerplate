@@ -19,9 +19,10 @@ If Atlassian MCP isn't connected, the skill prints the storage-format body for m
 - **Cloud:** <subdomain>.atlassian.net
 - **Space key:** <KEY>
 - **Layout:** three-page  (or "single" — see "Three-page model" below)
-- **Upper parent:** <breadcrumb>  (id: <pageId>)
-                    where the project's roadmap folder lives — usually space home or
-                    a shared "Roadmap" hub page across all projects
+- **Use shared Roadmap hub:** true  (default — set false to put project parent directly under upper anchor)
+- **Upper anchor:** <breadcrumb>  (id: <pageId>)
+                    where the org-level Roadmap hub lives — usually space home
+- **Roadmap hub:** id <hub-page-id>, title "Roadmap"  (set after first publish OR found-existing)
 - **Page IDs:** set after first publish
   - parent: <PROJECT> — Roadmap        →  <id>
   - child:  <PROJECT> — Current        →  <id>
@@ -49,19 +50,31 @@ Override: set `confluence_layout: single` in the changelog config block to rende
 ## Page-create vs update logic (three-page mode)
 
 ### First publish for a project
-1. Resolve the **upper parent** (where the project's roadmap folder lives) via `searchConfluenceUsingCql` if user gave a title, else use the `parentId` cached in changelog. Common choices: space home, or a dedicated org-level "Roadmap" hub page.
-2. Render three bodies via `references/templates/confluence-page.md` (parent / Current / Future sections).
-3. **Create parent first** (children need its pageId):
+1. Resolve the **upper anchor** (where the org-level Roadmap hub lives — usually space home).
+2. **Find or create the shared "Roadmap" hub** under the upper anchor (recommended default; keeps the page tree organized as more projects land):
+   - Search by title: `searchConfluenceUsingCql` for `parent = <upper-anchor-id> AND title = "Roadmap"`.
+   - **If found:** use its pageId as the project parent. Cache as `roadmap_hub_id` in changelog.
+   - **If not found:** offer to create it. Show preview:
+     ```html
+     <h2>Aigility — Roadmaps</h2>
+     <p>Single hub for all <SPACE> project roadmaps. Each project below gets a 3-page tree (parent + Current + Future) auto-maintained by the roadmap-tracker skill.</p>
+     <h3>Projects published here</h3>
+     <ul><!-- empty on creation; auto-updated by future publishes --></ul>
+     ```
+     On confirmation, `createConfluencePage` with title `Roadmap`, parent = upper anchor. Cache the resulting pageId as `roadmap_hub_id`.
+   - **To override the hub pattern** (place the project parent directly under the upper anchor instead of under a shared hub): set `confluence_use_hub: false` in the changelog config block. Default is `true`.
+3. Render three bodies via `references/templates/confluence-page.md` (parent / Current / Future sections).
+4. **Create project parent under the hub** (children need its pageId):
    ```json
    {
      "spaceId": "<spaceId>",
      "title": "<PROJECT> — Roadmap",
-     "parentId": "<upper-parent-id>",
+     "parentId": "<roadmap_hub_id or upper-anchor-id if hub disabled>",
      "body": {"storage": {"value": "<parent body>", "representation": "storage"}}
    }
    ```
    Capture `parentRoadmapPageId`.
-4. **Create Current** under the parent:
+5. **Create Current** under the project parent:
    ```json
    {
      "spaceId": "<spaceId>",
@@ -71,8 +84,9 @@ Override: set `confluence_layout: single` in the changelog config block to rende
    }
    ```
    Capture `currentPageId`.
-5. **Create Future** under the parent (same shape, title `<PROJECT> — Future`). Capture `futurePageId`.
-6. Append to CHANGELOG:
+6. **Create Future** under the project parent (same shape, title `<PROJECT> — Future`). Capture `futurePageId`.
+7. **Update the hub's "Projects published here" list** (if hub mode is on) — append a bullet linking to `<PROJECT> — Roadmap`. Single `updateConfluencePage` call on the hub.
+8. Append to CHANGELOG:
    ```markdown
    ## YYYY-MM-DD — Confluence published (initial three-page)
 
@@ -85,7 +99,7 @@ Override: set `confluence_layout: single` in the changelog config block to rende
    - **Future child:** <PROJECT> — Future (id <futurePageId>)
    - **Source commit:** <hash>
    ```
-7. Show all three URLs to user, parent first.
+9. Show URLs to user: hub URL (if newly created), then project parent, then both children.
 
 ### Subsequent publishes
 1. Read cached `parentRoadmapPageId`, `currentPageId`, `futurePageId` from CHANGELOG.
