@@ -1,0 +1,31 @@
+{
+  "skill": "roadmap-tracker",
+  "should_trigger": [
+    "what's the roadmap",
+    "what's next on the project",
+    "status of Phase 4",
+    "mark T-4e done",
+    "T-5a is in progress now",
+    "add Phase 12 — webhooks",
+    "what's blocked",
+    "show the pipeline",
+    "generate a sprint report for the last 2 weeks",
+    "draft a handoff for npatel",
+    "what should I send the team this week",
+    "create Jira tickets for Phase 5",
+    "publish the roadmap to Confluence",
+    "sync from Jira",
+    "pull task status from PROJ-123",
+    "what's the active phase",
+    "is this skill working"
+  ],
+  "should_not_trigger": [
+    "implement T-4e",
+    "fix this bug",
+    "review the PR",
+    "what's a good way to plan projects in general",
+    "design the dashboard component",
+    "write tests for the auth module",
+    "what's the architecture of this service"
+  ]
+}

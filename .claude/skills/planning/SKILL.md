@@ -45,6 +45,21 @@ Anything bigger than a single-file change. Migrations, refactors, new features, 
 - How do you know it worked? Unit tests, integration tests, metrics, manual check.
 - What's the acceptance criterion — the specific observation that proves done.
 
+### 8. Persist the plan to MASTER-PLAN.md
+Every plan produced by this skill **must** land in the repo's master roadmap so future sessions can pick it up. Mechanics:
+
+1. **Check if `docs/plans/MASTER-PLAN.md` exists.**
+   - **Yes** → propose adding this plan as a new "Pipeline" phase entry, OR (if the user is replacing/extending an existing in-progress phase) appending its tasks to that phase's task table. Show diff, confirm, write via the `roadmap-tracker` Capability 3 protocol (`.claude/skills/roadmap-tracker/references/status-update-protocol.md`).
+   - **No** → bootstrap one. Use the template at `.claude/skills/roadmap-tracker/references/templates/master-plan-template.md`. Show the seeded file before writing. After bootstrap, add this plan as Phase 1 "In progress."
+2. **Write the changelog entry.** Append to `docs/plans/.roadmap-tracker-changelog.md` recording: change type = `Phase added`, source = "produced by /planning", reason = the user's stated goal.
+3. **Suggest a commit message** matching the repo's convention (sample `git log --oneline -10`). Default for plan-only writes:
+   ```
+   docs(plan): add Phase N — <name> (planning skill output)
+   ```
+4. **Hand off to the user** — point them at the next step (commit, then `/feature-implementation` or just start work).
+
+If the user explicitly asks "don't update the master plan, just show me the plan" — skip Step 8. Otherwise, treat persistence as default behavior. The reason: a plan that lives only in chat context is lost the moment the session ends; a plan in `MASTER-PLAN.md` is recoverable, sharable, and survives compaction.
+
 ## Output format
 
 ```markdown
@@ -87,4 +102,9 @@ Anything bigger than a single-file change. Migrations, refactors, new features, 
 - Not stating what you're NOT doing. Scope cuts are part of the plan.
 
 ## Hand-off
-Once the plan is approved by the user, implementation is `/feature-implementation` (or just do it inline for small plans). Keep the plan open as a reference — tick off steps as they land.
+Once the plan is approved by the user:
+1. **Persist** to `docs/plans/MASTER-PLAN.md` per Step 8 above (default unless the user opts out).
+2. **Implementation** is `/feature-implementation` (or just do it inline for small plans).
+3. **Status updates** during execution flow through the `roadmap-tracker` skill — "mark T-N.X done" lands the diff in `MASTER-PLAN.md` automatically.
+
+Keep the plan open as a reference — tick off steps as they land.

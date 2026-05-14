@@ -57,6 +57,24 @@ For each screen/view:
 - RTL languages if relevant
 - Zero results, one result, many results, pagination limits
 
+### 9. Persist the UI plan to MASTER-PLAN.md
+Every UI plan produced by this skill **must** land in the repo's master roadmap, on the **frontend track**, so future sessions and the `roadmap-tracker` skill can pick it up. Mechanics:
+
+1. **Check if `docs/plans/MASTER-PLAN.md` exists.**
+   - **Yes** → propose adding the UI plan as either:
+     - A new "Pipeline" phase (if this is greenfield UI work, e.g. "design a new admin section")
+     - Frontend-track tasks under an existing in-progress phase (most common — backend + frontend phases pair, e.g. T-N.j..T-N.n covering the FE side of an in-flight backend phase)
+   - Show the diff, confirm, write via `roadmap-tracker` Capability 3 protocol (`.claude/skills/roadmap-tracker/references/status-update-protocol.md`).
+   - **No** → bootstrap one using `.claude/skills/roadmap-tracker/references/templates/master-plan-template.md`. After bootstrap, add this UI plan as Phase 1's frontend track.
+2. **Write the changelog entry.** Append to `docs/plans/.roadmap-tracker-changelog.md`: change type = `Phase added` or `Phase scope edit`, source = "produced by /ui-planner".
+3. **Suggest a commit message:**
+   ```
+   docs(plan): add frontend tasks for Phase N — <feature> (ui-planner output)
+   ```
+4. **Hand off** — point the user at the next step (commit, then build per the component breakdown).
+
+If the user explicitly says "don't update the master plan" — skip this step. Otherwise persistence is default. UI plans get lost in chat context fast; the master plan keeps them recoverable.
+
 ## Output format
 
 ```markdown
